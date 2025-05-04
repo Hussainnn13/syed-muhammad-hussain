@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Quiz</title>
+</head>
+<body>
+    <h1>Review Your Quiz</h1>
+    <div>
+        {% for answer in answers %}
+            <div>
+                <p><strong>{{ answer.question }}</strong></p>
+                <p>Your Answer: {{ answer.user_answer }} | Correct Answer: {{ answer.correct_answer }}</p>
+                <p>{{ 'Correct!' if answer.is_correct else 'Incorrect!' }}</p>
+            </div>
+        {% endfor %}
+    </div>
+    <br>
+    <a href="/">Back to Quiz</a>
+</body>
+</html>

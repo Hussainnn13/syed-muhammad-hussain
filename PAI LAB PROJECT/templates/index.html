@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Mentor</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .question, .review { margin: 20px; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Quiz Mentor</h1>
+    <form id="text-form">
+        <textarea id="input-text" rows="4" cols="50" placeholder="Paste or type your text here..."></textarea><br>
+        <button type="submit">Generate Quiz</button>
+    </form>
+    
+    <div id="quiz-container" style="display:none;">
+        <div id="question"></div>
+        <div id="options"></div>
+        <div id="answer-feedback"></div>
+    </div>
+    
+    <div>
+        <h3>Ask Follow-up Questions:</h3>
+        <input type="text" id="followup-question" placeholder="Ask 'Why' or 'How'">
+        <button id="ask-followup">Ask</button>
+        <div id="followup-answer"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('text-form');
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const text = document.getElementById('input-text').value;
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: new URLSearchParams({text}),
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+            });
+            const data = await response.json();
+            alert(data.message);
+            document.getElementById('quiz-container').style.display = 'block';
+            loadNextQuestion();
+        };
+
+        async function loadNextQuestion() {
+            const response = await fetch('/next_question', {method: 'POST'});
+            const data = await response.json();
+            if (data.status === 'finished') {
+                alert('Quiz Finished!');
+                window.location.href = '/review';
+                return;
+            }
+            document.getElementById('question').textContent = data.question;
+            const options = data.options.map(option => `<button onclick="submitAnswer('${option}')">${option}</button>`).join('');
+            document.getElementById('options').innerHTML = options;
+            document.getElementById('answer-feedback').textContent = '';
+        }
+
+        async function submitAnswer(answer) {
+            const response = await fetch('/submit_answer', {
+                method: 'POST',
+                body: new URLSearchParams({answer}),
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+            });
+            const data = await response.json();
+            document.getElementById('answer-feedback').textContent = data.is_correct ? 'Correct!' : `Incorrect! The correct answer is ${data.correct_answer}`;
+            setTimeout(() => loadNextQuestion(), 1000);
+        }
+
+        document.getElementById('ask-followup').onclick = async () => {
+            const question = document.getElementById('followup-question').value;
+            const response = await fetch('/ask_followup', {
+                method: 'POST',
+                body: new URLSearchParams({question}),
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+            });
+            const data = await response.json();
+            document.getElementById('followup-answer').textContent = data.response;
+        };
+    </script>
+</body>
+</html>
